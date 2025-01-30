@@ -1,0 +1,61 @@
+---
+- name: Install and configure Nginx
+  hosts: nginx_servers
+  become: true
+  collections:
+    - community.general  # Add this line
+  tasks:
+    - name: Install Nginx
+      apt:
+        name: nginx
+        state: present
+        update_cache: yes
+
+    - name: Configure Nginx virtual host
+      template:
+        src: templates/nginx_virtualhost.conf.j2
+        dest: /etc/nginx/sites-available/{{ site_name }}
+      vars:
+        site_name: mywebsite
+        server_name: mywebsite.com
+        document_root: /var/www/html/mywebsite
+      notify: Restart Nginx
+
+    - name: Enable Nginx virtual host
+      file:
+        src: /etc/nginx/sites-available/{{ site_name }}
+        dest: /etc/nginx/sites-enabled/{{ site_name }}
+        state: link
+      notify: Restart Nginx
+
+    - name: Create directory for custom HTML files
+      file:
+        path: "{{ document_root }}"
+        state: directory
+        mode: '0755'
+
+    - name: Deploy custom HTML file
+      template:
+        src: files/index.html.j2
+        dest: "{{ document_root }}/index.html"
+      notify: Restart Nginx
+
+    - name: Enable HTTPS with Let's Encrypt
+      community.general.certbot_cert:
+        domains:
+          - "{{ server_name }}"
+        email: admin@mywebsite.com
+        nginx: yes
+
+    - name: Set up basic authentication
+      community.general.htpasswd:
+        path: /etc/nginx/.htpasswd
+        name: admin
+        password: "{{ admin_password }}"
+      notify: Restart Nginx
+
+  handlers:
+    - name: Restart Nginx
+      service:
+        name: nginx
+        state: restarted

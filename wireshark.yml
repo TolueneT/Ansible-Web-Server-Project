@@ -1,0 +1,10 @@
+---
+- name: Install Wireshark
+  hosts: all
+  become: true
+  tasks:
+    - name: Install Wireshark
+      apt:
+        name: wireshark
+        state: present
+        update_cache: yes

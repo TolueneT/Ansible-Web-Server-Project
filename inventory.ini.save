@@ -1,0 +1,5 @@
+[nginx_servers]
+nginx_ip_address ansible_ssh_user='ubuntu'
+
+[apache_servers]
+apache_ip_address ansible_ssh_user='ubuntu'

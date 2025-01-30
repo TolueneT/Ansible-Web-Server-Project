@@ -1,0 +1,28 @@
+---
+- name: Install and configure Apache
+  hosts: apache_servers
+  become: true
+  tasks:
+    - name: Install Apache
+      apt:
+        name: apache2
+        state: present
+        update_cache: yes
+
+    - name: Create directory for custom HTML files
+      file:
+        path: /var/www/html/mywebsite
+        state: directory
+        mode: '0755'
+
+    - name: Deploy custom HTML file
+      template:
+        src: files/index.html.j2
+        dest: /var/www/html/mywebsite/index.html
+      notify: Restart Apache
+
+  handlers:
+    - name: Restart Apache
+      service:
+        name: apache2
+        state: restarted
